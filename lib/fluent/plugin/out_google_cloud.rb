@@ -423,6 +423,9 @@ module Fluent
     # Whether to attempt adjusting invalid log entry timestamps.
     config_param :adjust_invalid_timestamps, :bool, :default => true
 
+    # Whether to ignore timestamps on the log entry.
+    config_param :ignore_timestamps, :bool, :default => true
+
     # Whether to autoformat value of "logging.googleapis.com/trace" to
     # comply with Stackdriver Trace format
     # "projects/[PROJECT-ID]/traces/[TRACE-ID]" when setting
@@ -1568,7 +1571,11 @@ module Fluent
 
     def compute_timestamp(resource_type, record, time)
       current_time = Time.now
-      if record.key?('timestamp') &&
+      if @ignore_timestamps
+        timestamp = Time.at(time)
+        ts_secs = timestamp.tv_sec
+        ts_nanos = timestamp.tv_nsec
+      elsif record.key?('timestamp') &&
          record['timestamp'].is_a?(Hash) &&
          record['timestamp'].key?('seconds') &&
          record['timestamp'].key?('nanos')
